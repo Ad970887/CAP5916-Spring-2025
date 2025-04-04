@@ -1,0 +1,41 @@
+import PyPDF2
+
+# Path to the PDF file
+pdf_path = r"pdf path"
+
+# Open the PDF and extract text
+with open(pdf_path, "rb") as file:
+    reader = PyPDF2.PdfReader(file)
+    text = ""
+    for page in reader.pages:
+        if page.extract_text():
+            text += page.extract_text() + "\n"
+
+# Split the text into individual lines
+lines = text.split("\n")
+
+# List of keywords that indicate a conference publication
+conference_keywords = ["ICLR", "KDD", "IEEE", "NeurIPS", "ICDM", "ECML", "PKDD", "AAAI"]
+
+# List to store extracted paper titles
+titles = []
+
+# Loop through each line in the text
+for i in range(len(lines) - 1):
+    current_line = lines[i].strip()  # The current line
+    next_line = lines[i + 1].strip()  # The next line
+
+    # Check if the next line contains a conference keyword 
+    if any(keyword in next_line for keyword in conference_keywords):
+        # Ensure the title is properly formatted:
+        # - Must be more than 5 characters
+        # - Must not contain author names (commas, "et al.")
+        # - Must not be a conference name
+        if len(current_line) > 5 and not any(symbol in current_line for symbol in [",", "Panel", "Workshop", "Session"]):
+            # Fix title formatting issues (removes unwanted spaces/symbols)
+            clean_title = current_line.strip(" {}")  # Removes extra characters
+            titles.append(clean_title)
+
+# Print only the extracted titles
+for title in titles:
+    print(title)
