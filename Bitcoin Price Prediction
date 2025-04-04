@@ -1,0 +1,75 @@
+import pandas as pd
+import shap
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+
+# Loads the datasets
+btc_prices = pd.read_csv("C:/Users/fresh/PycharmProjects/CAP5619/pricedBitcoin2009-2018.csv")
+amo_chainlets = pd.read_csv("C:/Users/fresh/PycharmProjects/CAP5619/AmoChainletsInTime.txt", sep="\t")
+occ_chainlets = pd.read_csv("C:/Users/fresh/PycharmProjects/CAP5619/OccChainletsInTime.txt", sep="\t")
+
+# Parses the dates correctly
+btc_prices['date'] = pd.to_datetime(btc_prices['date'], format='%m/%d/%Y %H:%M', errors='coerce')
+
+# Merges datasets on 'year' and 'day'
+merged_data = btc_prices.merge(amo_chainlets, on=['year', 'day'], suffixes=('', '_amo'))
+merged_data = merged_data.merge(occ_chainlets, on=['year', 'day'], suffixes=('', '_occ'))
+
+# Drops unnecessary columns to avoid data leakage
+drop_columns = ['year', 'day', 'totaltx', 'totaltx_amo', 'totaltx_occ']
+merged_data = merged_data.drop(columns=drop_columns)
+
+# Creates lagged price features (using past 7 days)
+for lag in range(1, 8):
+    merged_data[f'price_lag_{lag}'] = merged_data['price'].shift(lag)
+
+# Drops missing values caused by lagging
+merged_data = merged_data.dropna()
+
+# Splits the data into training (before Dec 2017) and testing (Dec 2017)
+train_data = merged_data[merged_data['date'] < '2017-12-01']
+test_data = merged_data[(merged_data['date'] >= '2017-12-01') & (merged_data['date'] <= '2017-12-31')]
+
+# Selects the features and target variable
+feature_cols = [f'price_lag_{lag}' for lag in range(1, 8)] + ['1:1', '1:2']  # Example chainlet features
+X_train = train_data[feature_cols]
+y_train = train_data['price']
+X_test = test_data[feature_cols]
+y_test = test_data['price']
+
+# Trains a simple linear regression model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Predicts the prices for December 2017
+y_pred = model.predict(X_test)
+
+# Calculates the RMSE
+rmse = mean_squared_error(y_test, y_pred, squared=False)
+print(f'RMSE: {rmse}')
+
+# Calculates the average difference
+average_difference = (abs(y_test - y_pred)).mean()
+print(f'Average Difference: {average_difference}')
+
+# Saves the predictions to CSV
+predictions = pd.DataFrame({
+    'date': test_data['date'],
+    'predicted_price': y_pred
+})
+predictions.to_csv('predicted_bitcoin_prices_dec2017.csv', index=False)
+
+# Explains model using SHAP
+explainer = shap.Explainer(model, X_train)
+shap_values = explainer(X_test)
+
+# Plots SHAP values for the three predictions
+for i in range(3):
+    shap.plots.waterfall(shap_values[i])
+
+# SHAP explanations
+for i in range(3):
+    print(f"Explanation for prediction {i+1}:")
+    print(shap_values[i])
