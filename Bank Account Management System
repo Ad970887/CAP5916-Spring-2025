@@ -1,0 +1,203 @@
+# Implement a banking program with a parent class `Account` and two child classes, `Debit` and `Credit`. 
+# The `Account` class includes attributes such as `account_holder`, `account_type`, `credit_score`, `annual_income`, and `balance`, along with a method to print account details. 
+# The `Debit` class adds an `account_number` generated randomly between 444400000000 and 444499999999, and methods for depositing, withdrawing, and checking balance. 
+# The `Credit` class adds an `account_number` generated randomly between 555500000000 and 555599999999, a `credit_limit` determined by `credit_score` and `annual_income`, and methods for making purchases, withdrawing (with a fee), paying credit, and checking balance. 
+# The program interacts with the user through a menu to perform various transactions, and prints transaction information upon exiting.
+
+import random
+
+# 1, Account class, its own constructor with attributes
+class Account:
+    def __init__(self, account_holder, account_type, credit_score, annual_income, balance=0):
+        self.account_holder = account_holder
+        self.account_type = account_type
+        self.credit_score = credit_score
+        self.annual_income = annual_income
+        self.balance = balance
+
+    # 1, second method which prints the attributes information of the constructor
+    def account_detail(self):
+        print("----------ACCOUNT DETAIL----------")
+        print(f"Account Holder: {self.account_holder.upper()}")
+        print(f"Account Type: {self.account_type}")
+        print(f"Credit Score: {self.credit_score}")
+        print(f"Annual Income: ${self.annual_income}")
+
+    # 2, Debit child class with additional attribute self.account
+
+
+class Debit(Account):
+    def __init__(self, account_holder, account_type, credit_score, annual_income, balance=0):
+        super().__init__(account_holder, account_type, credit_score, annual_income, balance)
+        self.account_number = random.randint(444400000000, 444499999999)
+
+    # 2, debit child class has four other methods, method 1 takes the attribute “account” and updates the “balance” with the “amount”
+    def deposit(self, amount):
+        self.balance += amount
+        print(f"Current account balance: ${self.balance}")
+
+    # 2, debit child class, method 2 takes the attribute “account” and updates the “balance” with the “amount”
+    def withdraw(self, amount):
+        if amount > self.balance:
+            print("Insufficient fund!")
+            print(f"Your balance is ${self.balance} only.")
+            print("Try with less amount than balance.")
+        else:
+            self.balance -= amount
+            print(f"${amount} withdrawal successful!")
+            print(f"Current account balance: ${self.balance}")
+        # 2, debit child class, method 3 prints the current balance
+
+    def check_balance(self):
+        print(f"Available balance: ${self.balance}")
+
+    # 2, debit child class, method 4 uses the same method from the parent class
+    def account_detail(self):
+        super().account_detail()
+        print(f"Account Number: {self.account_number}")
+        print(f"Account Balance: ${self.balance}")
+    # 3, credit child class with additional attributes “account_number” and “credit_limit”
+
+
+class Credit(Account):
+    def __init__(self, account_holder, account_type, credit_score, annual_income, balance=0):
+        super().__init__(account_holder, account_type, credit_score, annual_income, balance)
+        self.account_number = random.randint(555500000000, 555599999999)
+        self.credit_limit = self.calculate_credit_limit()
+
+    def calculate_credit_limit(self):
+        if self.credit_score >= 740 and self.annual_income >= 100000:
+            return 4000
+        elif 670 <= self.credit_score <= 739 and self.annual_income >= 80000:
+            return 2000
+        elif 580 <= self.credit_score <= 669 and self.annual_income >= 60000:
+            return 1000
+        else:
+            return 500
+
+        # 3, credit child class has four other methods, method 1 takes the “purchase_amount” attribute and updates the “balance” with “purchase_amount”
+
+    def make_purchase(self, purchase_amount):
+        available_funds = self.credit_limit - self.balance
+
+        if purchase_amount > available_funds:
+            print("Insufficient fund!")
+            print(f"Your balance is ${self.balance} and your credit limit is ${self.credit_limit}.")
+            print(f"Try ${available_funds} or less amount.")
+        else:
+            self.balance += purchase_amount
+            print(f"${purchase_amount} purchase successful!")
+            print(f"Current account balance: ${self.balance}")
+        # 3, method 2 takes the attribute “amount” and updates the “balance” with the “amount”
+
+    def withdraw(self, amount):
+        withdrawal_fee = amount * 0.05
+        total_amount = amount + withdrawal_fee
+        available_funds = self.credit_limit - self.balance
+
+        if total_amount > available_funds:
+            print("Insufficient fund!")
+            print(f"Your balance is ${self.balance} and your credit limit is ${self.credit_limit}.")
+            print(f"Please also consider 5% withdrawal fee that applies to the withdrawal amount.")
+        else:
+            self.balance += total_amount
+            print(f"${amount} withdrawal successful!")
+            print(f"Current account balance: ${self.balance}")
+        # 3, method 3 takes “payment_amount” attribute and updates the balance after paid
+
+    def pay_credit(self, payment_amount):
+        self.balance -= payment_amount
+        print(f"Current account balance: ${self.balance}")
+
+    # 3, method 4 prints the current balance
+    def check_balance(self):
+        print(f"Account balance: ${self.balance}")
+
+    # 3, method 5 uses the same method from the parent class
+    def account_detail(self):
+        super().account_detail()
+        print(f"Account Number: {self.account_number}")
+        print(f"Credit Limit: ${self.credit_limit}")
+        print(f"Account Balance: ${self.balance}")
+
+    # method that asks for user’s input with options
+def transaction_menu(account):
+    while True:
+        print(""" 
+        TRANSACTION  
+   ********************* 
+        Menu: 
+        1. Account Details 
+        2. Check Balance 
+        3. Deposit (for debit card only) 
+        4. Withdraw (for debit card only) 
+        5. Make a Purchase (for credit card only) 
+        6. Withdraw from Credit Card 
+        7. Make a Payment to Your Credit Card 
+        8. Exit 
+    ********************* 
+        """)
+        choice = int(input("Enter 1, 2, 3, 4, 5, 6, 7, or 8: "))
+
+        if choice == 1:
+            account.account_detail()
+        elif choice == 2:
+            account.check_balance()
+        elif choice == 3 and isinstance(account, Debit):
+            amount = float(input("The amount you want to deposit into your debit card: $"))
+            account.deposit(amount)
+        elif choice == 4 and isinstance(account, Debit):
+            amount = float(input("The amount you want to withdraw from your debit card: $"))
+            account.withdraw(amount)
+        elif choice == 5 and isinstance(account, Credit):
+            purchase_amount = float(input("The amount to spend for a purchase from your credit card: $"))
+            account.make_purchase(purchase_amount)
+        elif choice == 6 and isinstance(account, Credit):
+            amount = float(input("The amount you want to withdraw from your credit card: $"))
+            account.withdraw(amount)
+        elif choice == 7 and isinstance(account, Credit):
+            payment_amount = float(input("The amount you want to pay for the balance on your credit card: $"))
+            account.pay_credit(payment_amount)
+        elif choice == 8:
+            transaction_number = random.randint(10000, 1000000)
+            print(""" 
+            printing receipt.............. 
+      ****************************************** 
+          Transaction is now complete.                          
+         Transaction number: {}  
+         Account holder: {}                   
+         Account number: {}                 
+         Account balance: ${}                     
+
+         Thanks for choosing FINTECH as your bank!                   
+     ****************************************** 
+            """.format(transaction_number, account.account_holder.upper(), account.account_number, account.balance))
+            break
+        else:
+            print("Invalid option. Please try again.")
+
+        # Test run 2, Input collection
+
+
+print("*******WELCOME TO BANK OF FINTECH*******")
+print("___________________________________________________________")
+print("----------ACCOUNT CREATION----------")
+
+name = input("Enter your name: ")
+account_type = input("Enter your account type: (Please type either credit or debit) ").lower()
+credit_score = int(input("Enter your credit score: "))
+annual_income = int(input("Enter your annual income: $"))
+
+if account_type == "debit":
+    account = Debit(name, account_type, credit_score, annual_income)
+elif account_type == "credit":
+    account = Credit(name, account_type, credit_score, annual_income)
+else:
+    print("Invalid account type.")
+    exit()
+
+print("Congratulations! Account created successfully......")
+
+# Transaction loop
+while input("Do you want to do any transaction?(y/n): ").lower() == 'y':
+    transaction_menu(account)
