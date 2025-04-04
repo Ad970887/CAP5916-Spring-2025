@@ -21,7 +21,7 @@ openai.api_key = os.environ["OPENAI_API_KEY"]
 
 # Global variables
 HEADERS = {
-    "User-Agent": "Prachi Saibewar (pr615068@ucf.edu) for academic 8-K analysis"
+    "User-Agent": "Name ("email") for academic 8-K analysis"
 }
 CSV_FILE = "SP500_8K_Filings.csv"
 
